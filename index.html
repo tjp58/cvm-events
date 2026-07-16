@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0"
+    content="width=device-width, initial-scale=1"
   >
 
   <title>CVM Events</title>
@@ -13,17 +13,20 @@
     html,
     body {
       width: 100%;
-      height: 100%;
+      min-height: 100%;
       margin: 0;
-      padding: 0;
-      overflow: hidden;
       background: #ffffff;
       font-family: Arial, Helvetica, sans-serif;
+      color: #222222;
+    }
+
+    #status {
+      padding: 40px;
+      font-size: 28px;
     }
 
     .localist-widget {
       width: 100%;
-      height: 100%;
     }
 
     .localist-widget .event-list {
@@ -33,14 +36,51 @@
 </head>
 
 <body>
+  <div id="status">Loading Cornell events...</div>
+
   <div
     id="localist-widget-94774094"
     class="localist-widget"
   ></div>
 
-  <script
-    type="text/javascript"
-    src="https://events.cornell.edu/widget/view?schools=cornell&amp;types=5167&amp;days=31&amp;num=4&amp;container=localist-widget-94774094&amp;template=cornell-edu-events-template-with-room">
+  <script>
+    var statusElement = document.getElementById("status");
+    var scriptElement = document.createElement("script");
+
+    scriptElement.type = "text/javascript";
+
+    scriptElement.src =
+      "https://events.cornell.edu/widget/view" +
+      "?schools=cornell" +
+      "&types=5167" +
+      "&days=31" +
+      "&num=4" +
+      "&container=localist-widget-94774094" +
+      "&template=cornell-edu-events-template-with-room" +
+      "&cache=" + new Date().getTime();
+
+    scriptElement.onload = function () {
+      statusElement.innerHTML = "Events loaded.";
+
+      window.setTimeout(function () {
+        var container =
+          document.getElementById("localist-widget-94774094");
+
+        if (container && container.innerHTML.length > 10) {
+          statusElement.style.display = "none";
+        } else {
+          statusElement.innerHTML =
+            "The Cornell event service loaded, but returned no visible events.";
+        }
+      }, 4000);
+    };
+
+    scriptElement.onerror = function () {
+      statusElement.innerHTML =
+        "Unable to load the Cornell event service.";
+    };
+
+    document.body.appendChild(scriptElement);
   </script>
 </body>
 </html>
