@@ -1,0 +1,47 @@
+name: Update Cornell Events
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: "15 * * * *"
+
+  push:
+    branches:
+      - master
+    paths:
+      - "generate_events.py"
+      - ".github/workflows/update-events.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  update-events:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate event page
+        run: python generate_events.py
+
+      - name: Commit updated page
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add index.html
+
+          if git diff --cached --quiet; then
+            echo "No event changes to publish."
+          else
+            git commit -m "Update Cornell events"
+            git push
+          fi
