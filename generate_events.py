@@ -5,12 +5,13 @@ import urllib.request
 
 API_URL = (
     "https://events.cornell.edu/api/2/events"
-    "?type=5167"
-    "&days=31"
-    "&pp=4"
+    "?days=31"
+    "&pp=50"
+    "&experience=inperson"
 )
 
 OUTPUT_FILE = "index.html"
+MAX_EVENTS = 6
 
 
 def get_event_data():
@@ -32,31 +33,44 @@ def safe_text(value, fallback=""):
     return html.escape(str(value), quote=True)
 
 
-def get_start_date(event):
+def get_instance(event):
     instances = event.get("event_instances", [])
     if not instances:
+        return {}
+
+    wrapper = instances[0]
+    return wrapper.get("event_instance", wrapper)
+
+
+def parse_start(event):
+    start = get_instance(event).get("start")
+    if not start:
         return None
 
-    instance_wrapper = instances[0]
-    instance = instance_wrapper.get("event_instance", instance_wrapper)
-    return instance.get("start")
+    try:
+        return datetime.datetime.fromisoformat(start.replace("Z", "+00:00"))
+    except Exception:
+        return None
 
 
-def format_date(date_value):
-    if not date_value:
+def format_time(event):
+    date_text = event.get("date_time_description")
+    if date_text:
+        return safe_text(date_text)
+
+    start = parse_start(event)
+    if not start:
         return ""
 
-    try:
-        cleaned = date_value.replace("Z", "+00:00")
-        parsed = datetime.datetime.fromisoformat(cleaned)
-
-        # Linux runner supports %-d and %-I.
-        return parsed.strftime("%A, %B %-d, %Y · %-I:%M %p")
-    except Exception:
-        return str(date_value)
+    return safe_text(start.strftime("%-I:%M %p"))
 
 
 def build_event_card(event):
+    start = parse_start(event)
+
+    month = start.strftime("%b") if start else ""
+    day = start.strftime("%-d") if start else ""
+
     title = safe_text(event.get("title"), "Untitled event")
 
     location = safe_text(
@@ -66,11 +80,7 @@ def build_event_card(event):
         ""
     )
 
-    date_text = safe_text(
-        event.get("date_time_description")
-        or format_date(get_start_date(event)),
-        ""
-    )
+    time_text = format_time(event)
 
     event_url = safe_text(
         event.get("localist_url")
@@ -80,29 +90,29 @@ def build_event_card(event):
 
     location_html = ""
     if location:
-        location_html = (
-            '<div class="event-location">'
-            + location
-            + "</div>"
-        )
+        location_html = f'<div class="event-location">{location}</div>'
 
     return f"""
     <article class="event">
-        <div class="event-date">{date_text}</div>
+        <div class="date-block">
+            <div class="month">{safe_text(month)}</div>
+            <div class="day">{safe_text(day)}</div>
+        </div>
 
-        <h2 class="event-title">
-            <a href="{event_url}" target="_blank" rel="noopener">
-                {title}
-            </a>
-        </h2>
+        <div class="event-copy">
+            <h2 class="event-title">
+                <a href="{event_url}" target="_blank" rel="noopener">{title}</a>
+            </h2>
 
-        {location_html}
+            <div class="event-time">{time_text}</div>
+            {location_html}
+        </div>
     </article>
     """
 
 
 def build_page(events):
-    cards = "\n".join(build_event_card(event) for event in events)
+    cards = "\n".join(build_event_card(event) for event in events[:MAX_EVENTS])
 
     if not cards:
         cards = """
@@ -117,16 +127,8 @@ def build_page(events):
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1"
-    >
-
-    <meta
-        http-equiv="refresh"
-        content="1800"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="refresh" content="1800">
 
     <title>Cornell CVM Events</title>
 
@@ -142,22 +144,28 @@ def build_page(events):
             margin: 0;
             padding: 0;
             background: #ffffff;
-            color: #222222;
+            color: #111111;
             font-family: Arial, Helvetica, sans-serif;
         }}
 
         body {{
-            padding: 32px 42px;
+            padding: 18px 22px 12px;
         }}
 
         .events {{
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0;
             width: 100%;
         }}
 
         .event {{
-            margin: 0;
-            padding: 22px 0;
-            border-bottom: 2px solid #dddddd;
+            display: grid;
+            grid-template-columns: 58px minmax(0, 1fr);
+            gap: 12px;
+            align-items: start;
+            padding: 14px 0;
+            border-bottom: 1px solid #d7d7d7;
         }}
 
         .event:first-child {{
@@ -168,40 +176,74 @@ def build_page(events):
             border-bottom: 0;
         }}
 
-        .event-date {{
-            margin-bottom: 8px;
+        .date-block {{
+            text-align: center;
+            line-height: 1;
+        }}
+
+        .month {{
+            margin-bottom: 2px;
             color: #666666;
-            font-size: 22px;
-            font-weight: bold;
-            line-height: 1.25;
+            font-size: 14px;
+            text-transform: uppercase;
+        }}
+
+        .day {{
+            font-size: 32px;
+            font-weight: 400;
+        }}
+
+        .event-copy {{
+            min-width: 0;
         }}
 
         .event-title {{
-            margin: 0 0 8px;
-            font-size: 34px;
-            line-height: 1.15;
+            margin: 0 0 4px;
+            font-size: 22px;
+            line-height: 1.08;
         }}
 
         .event-title a {{
-            color: #b31b1b;
+            color: #006699;
             text-decoration: none;
+        }}
+
+        .event-time,
+        .event-location {{
+            font-size: 15px;
+            line-height: 1.25;
+        }}
+
+        .event-time {{
+            margin-bottom: 2px;
+            font-weight: 700;
         }}
 
         .event-location {{
             color: #333333;
-            font-size: 23px;
-            line-height: 1.3;
         }}
 
         .empty-message {{
-            padding: 40px 0;
-            font-size: 30px;
+            padding: 24px 0;
+            font-size: 24px;
         }}
 
         .updated {{
-            margin-top: 24px;
+            margin-top: 10px;
             color: #777777;
-            font-size: 15px;
+            font-size: 11px;
+            text-align: right;
+        }}
+
+        @media (min-width: 900px) {{
+            .events {{
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                column-gap: 34px;
+            }}
+
+            .event:nth-last-child(-n + 2) {{
+                border-bottom: 0;
+            }}
         }}
     </style>
 </head>
@@ -229,18 +271,12 @@ def main():
         if isinstance(event, dict):
             events.append(event)
 
-    page = build_page(events[:4])
+    page = build_page(events)
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as output:
         output.write(page)
 
-    print(
-        "Created "
-        + OUTPUT_FILE
-        + " with "
-        + str(len(events[:4]))
-        + " events."
-    )
+    print("Created " + OUTPUT_FILE + " with " + str(min(len(events), MAX_EVENTS)) + " events.")
 
 
 if __name__ == "__main__":
