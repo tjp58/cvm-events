@@ -5,13 +5,14 @@ import urllib.request
 
 API_URL = (
     "https://events.cornell.edu/api/2/events"
-    "?days=31"
+    "?type=5167"
+    "&days=31"
     "&pp=50"
-    "&experience=inperson"
+    "&for=widget"
 )
 
 OUTPUT_FILE = "index.html"
-MAX_EVENTS = 6
+MAX_EVENTS = 8
 
 
 def get_event_data():
