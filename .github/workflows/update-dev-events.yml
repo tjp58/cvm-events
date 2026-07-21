@@ -1,0 +1,46 @@
+name: Update CVM Dev Events
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-cvm-dev-events
+  cancel-in-progress: false
+
+jobs:
+  update-dev-events:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate development event page
+        run: python generate_events_dev.py
+
+      - name: Commit development page
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add dev.html
+
+          if git diff --cached --quiet; then
+            echo "No development page changes to publish."
+            exit 0
+          fi
+
+          git commit -m "Update CVM event feed dev page"
+          git pull --rebase origin master
+          git push origin HEAD:master
