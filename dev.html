@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="1800">
+  <title>Cornell CVM Events — Development</title>
+
+  <style>
+    :root {
+      --cvm-carnelian: #B31B1B;
+      --cvm-black: #222222;
+      --cvm-white: #FFFFFF;
+      --cvm-blue: #32658A;
+      --cvm-gray-700: #303030;
+      --cvm-gray-500: #5f5f5f;
+      --cvm-gray-300: #969696;
+      --cvm-gray-100: #E5E5E5;
+      --cvm-gray-50: #F5F5F4;
+
+      --fg-1: var(--cvm-black);
+      --fg-2: var(--cvm-gray-700);
+      --fg-3: var(--cvm-gray-500);
+      --fg-muted: var(--cvm-gray-300);
+      --bg-1: var(--cvm-white);
+      --bg-2: var(--cvm-gray-50);
+      --border-1: var(--cvm-gray-100);
+
+      --font-display: "Montserrat", "Helvetica Neue", Arial, sans-serif;
+      --font-body: "Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      padding: 0;
+      background: var(--bg-2);
+      color: var(--fg-1);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body { padding: 18px 14px; }
+
+    .ef-feed {
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .ef-month { margin-bottom: 18px; }
+    .ef-month:last-child { margin-bottom: 0; }
+
+    .ef-month__header {
+      display: flex;
+      align-items: baseline;
+      gap: 9px;
+      margin-bottom: 7px;
+    }
+
+    .ef-month__name {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1.2;
+      text-transform: uppercase;
+      color: var(--fg-1);
+      white-space: nowrap;
+    }
+
+    .ef-month__rule {
+      flex: 1;
+      height: 1px;
+      background: var(--border-1);
+    }
+
+    .ef-month__count {
+      font-size: 10px;
+      color: var(--fg-3);
+      white-space: nowrap;
+    }
+
+    .ef-list {
+      overflow: hidden;
+      background: var(--bg-1);
+      border: 1px solid var(--border-1);
+      border-radius: 4px;
+    }
+
+    .ef-event {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 12px;
+    }
+
+    .ef-event + .ef-event {
+      border-top: 1px solid var(--border-1);
+    }
+
+    .ef-date {
+      flex: 0 0 53px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+      padding: 1px 12px 0 0;
+      border-right: 1px solid var(--border-1);
+      align-self: stretch;
+    }
+
+    .ef-date__month {
+      font-family: var(--font-display);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      line-height: 1.1;
+      text-transform: uppercase;
+      color: var(--cvm-carnelian);
+    }
+
+    .ef-date__day {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      color: var(--fg-1);
+    }
+
+    .ef-date__weekday {
+      font-size: 9px;
+      line-height: 1.1;
+      color: var(--fg-muted);
+    }
+
+    .ef-event__body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .ef-tag {
+      font-family: var(--font-display);
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1.1;
+      text-transform: uppercase;
+      color: var(--cvm-carnelian);
+    }
+
+    .ef-tag--seminar { color: var(--cvm-blue); }
+    .ef-tag--ceremony { color: #8a6210; }
+
+    .ef-event__title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.17;
+      color: var(--fg-1);
+    }
+
+    .ef-event__title a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .ef-event__blurb {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.3;
+      color: var(--fg-2);
+    }
+
+    .ef-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+
+    .ef-meta__item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      line-height: 1.2;
+      color: var(--fg-3);
+    }
+
+    .ef-meta__icon {
+      width: 11px;
+      height: 11px;
+      flex: 0 0 11px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .ef-empty {
+      padding: 20px;
+      background: var(--bg-1);
+      border: 1px solid var(--border-1);
+      font-size: 16px;
+    }
+
+    @media (max-height: 760px) {
+      body {
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+
+      .ef-month { margin-bottom: 12px; }
+
+      .ef-event {
+        padding-top: 9px;
+        padding-bottom: 9px;
+      }
+
+      .ef-event__blurb { display: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="ef-feed">
+    
+    <section class="ef-month">
+      <header class="ef-month__header">
+        <h2 class="ef-month__name">July 2026</h2>
+        <div class="ef-month__rule"></div>
+        <span class="ef-month__count">1 event</span>
+      </header>
+
+      <div class="ef-list ef-list--compact">
+        
+      <article class="ef-event">
+        <div class="ef-date">
+          <div class="ef-date__month">JUL</div>
+          <div class="ef-date__day">24</div>
+          <div class="ef-date__weekday">Fri</div>
+        </div>
+
+        <div class="ef-event__body">
+          <div class="ef-tag">Conference/Workshop</div>
+
+          <h3 class="ef-event__title">
+            <a href="https://events.cornell.edu/event/2026-fred-scott-feline-symposium-july-24-26-2026" target="_blank" rel="noopener">2026 Fred Scott Feline Symposium (July 24 - 26, 2026)</a>
+          </h3>
+
+          <p class="ef-event__blurb">The Fred Scott Feline Symposium is an annual professional development symposium offered and organized by the Cornell Feline Health Center. The…</p>
+
+          <div class="ef-meta">
+            <span class="ef-meta__item">
+<svg class="ef-meta__icon" viewBox="0 0 24 24" aria-hidden="true">
+  <circle cx="12" cy="12" r="10"></circle>
+  <polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+8:00 AM</span>
+            <span class="ef-meta__item">
+<svg class="ef-meta__icon" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+  <circle cx="12" cy="10" r="3"></circle>
+</svg>
+Schurman Hall</span>
+          </div>
+        </div>
+      </article>
+    
+      </div>
+    </section>
+    
+
+    <section class="ef-month">
+      <header class="ef-month__header">
+        <h2 class="ef-month__name">August 2026</h2>
+        <div class="ef-month__rule"></div>
+        <span class="ef-month__count">2 events</span>
+      </header>
+
+      <div class="ef-list ef-list--compact">
+        
+      <article class="ef-event">
+        <div class="ef-date">
+          <div class="ef-date__month">AUG</div>
+          <div class="ef-date__day">6</div>
+          <div class="ef-date__weekday">Thu</div>
+        </div>
+
+        <div class="ef-event__body">
+          <div class="ef-tag">Conference/Workshop</div>
+
+          <h3 class="ef-event__title">
+            <a href="https://events.cornell.edu/event/duffield-institute-service-dog-symposium-898" target="_blank" rel="noopener">Duffield Institute Service Dog Symposium</a>
+          </h3>
+
+          <p class="ef-event__blurb">Duffield Institute Service Dog Symposium Dates: August 6 &amp; 7, 2026 Location: College of Veterinary Medicine, Cornell University, Ithaca, NY Join us…</p>
+
+          <div class="ef-meta">
+            <span class="ef-meta__item">
+<svg class="ef-meta__icon" viewBox="0 0 24 24" aria-hidden="true">
+  <circle cx="12" cy="12" r="10"></circle>
+  <polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+8:00 AM</span>
+            <span class="ef-meta__item">
+<svg class="ef-meta__icon" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+  <circle cx="12" cy="10" r="3"></circle>
+</svg>
+Lecture hall 4</span>
+          </div>
+        </div>
+      </article>
+    
+
+      <article class="ef-event">
+        <div class="ef-date">
+          <div class="ef-date__month">AUG</div>
+          <div class="ef-date__day">7</div>
+          <div class="ef-date__weekday">Fri</div>
+        </div>
+
+        <div class="ef-event__body">
+          <div class="ef-tag">Conference/Workshop</div>
+
+          <h3 class="ef-event__title">
+            <a href="https://events.cornell.edu/event/duffield-institute-service-dog-symposium-898" target="_blank" rel="noopener">Duffield Institute Service Dog Symposium</a>
+          </h3>
+
+          <p class="ef-event__blurb">Duffield Institute Service Dog Symposium Dates: August 6 &amp; 7, 2026 Location: College of Veterinary Medicine, Cornell University, Ithaca, NY Join us…</p>
+
+          <div class="ef-meta">
+            <span class="ef-meta__item">
+<svg class="ef-meta__icon" viewBox="0 0 24 24" aria-hidden="true">
+  <circle cx="12" cy="12" r="10"></circle>
+  <polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+8:00 AM</span>
+            <span class="ef-meta__item">
+<svg class="ef-meta__icon" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+  <circle cx="12" cy="10" r="3"></circle>
+</svg>
+Lecture hall 4</span>
+          </div>
+        </div>
+      </article>
+    
+      </div>
+    </section>
+    
+  </main>
+</body>
+</html>
