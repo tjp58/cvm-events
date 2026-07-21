@@ -16,6 +16,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: update-cornell-events
+  cancel-in-progress: false
+
 jobs:
   update-events:
     runs-on: ubuntu-latest
@@ -23,6 +27,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -41,7 +48,10 @@ jobs:
 
           if git diff --cached --quiet; then
             echo "No event changes to publish."
-          else
-            git commit -m "Update Cornell events"
-            git push
+            exit 0
           fi
+
+          git commit -m "Update Cornell events"
+
+          git pull --rebase origin master
+          git push origin HEAD:master
